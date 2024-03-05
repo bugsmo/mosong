@@ -1,13 +1,17 @@
 package web
 
 import (
+	"fmt"
 	"mosong/webook/internal/domain"
 	"mosong/webook/internal/service"
 	"net/http"
 
 	"github.com/dlclark/regexp2"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
+
+const userIdKey = "userId"
 
 const emailRegexPattern = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$"
 
@@ -29,7 +33,7 @@ func NewUserHandler(svc *service.UserService) *UserHandler {
 	}
 }
 
-func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
+func (c *UserHandler) RegisterRoutes(server *gin.Engine) {
 	// 直接注册
 	// server.POST("/users/signup", u.SignUp)
 	// server.POST("/users/login", u.Login)
@@ -38,18 +42,18 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 
 	// 分组注册
 	ug := server.Group("/users")
-	ug.POST("/signup", u.SignUp)
-	ug.POST("/login", u.Login)
-	ug.POST("/edit", u.Edit)
-	ug.GET("/profile", u.Profile)
+	ug.POST("/signup", c.SignUp)
+	ug.POST("/login", c.Login)
+	ug.POST("/edit", c.Edit)
+	ug.GET("/profile", c.Profile)
 }
 
 // SignUp 用户注册接口
-func (u *UserHandler) SignUp(ctx *gin.Context) {
+func (c *UserHandler) SignUp(ctx *gin.Context) {
 	type SignUpReq struct {
 		Email           string `json:"email"`
 		Password        string `json:"password"`
-		ConfirmPassword string `json:"confirm_password"`
+		ConfirmPassword string `json:"confirmPassword"`
 	}
 
 	var req SignUpReq
@@ -58,7 +62,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		return
 	}
 
-	isEmail, err := u.emailRegexExp.MatchString(req.Email)
+	isEmail, err := c.emailRegexExp.MatchString(req.Email)
 	if err != nil {
 		ctx.String(http.StatusOK, "系统错误")
 		return
@@ -73,7 +77,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		return
 	}
 
-	isPassword, err := u.passwordRegexExp.MatchString(req.Password)
+	isPassword, err := c.passwordRegexExp.MatchString(req.Password)
 	if err != nil {
 		ctx.String(http.StatusOK, "系统错误")
 		return
@@ -84,7 +88,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		return
 	}
 
-	err = u.svc.Signup(ctx.Request.Context(), domain.User{
+	err = c.svc.Signup(ctx.Request.Context(), domain.User{
 		Email:    req.Email,
 		Password: req.ConfirmPassword,
 	})
@@ -103,10 +107,53 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 }
 
 // Login 用户登录接口
-func (u *UserHandler) Login(ctx *gin.Context) {}
+func (c *UserHandler) Login(ctx *gin.Context) {
+	type LoginReq struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	var req LoginReq
+
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+	u, err := c.svc.Login(ctx, req.Email, req.Password)
+	if err == service.ErrInvalidUserOrPassword {
+		ctx.String(http.StatusOK, "用户名或者密码不正确，请重试")
+		return
+	}
+
+	sess := sessions.Default(ctx)
+	sess.Set(userIdKey, u.Id)
+	err = sess.Save()
+	fmt.Println(sess.Get(userIdKey))
+	if err != nil {
+		ctx.String(http.StatusOK, "系统异常")
+		return
+	}
+	ctx.String(http.StatusOK, "登录成功")
+}
 
 // Edit 用户编辑信息
-func (u *UserHandler) Edit(ctx *gin.Context) {}
+func (c *UserHandler) Edit(ctx *gin.Context) {}
 
 // Profile 用户详情
-func (u *UserHandler) Profile(ctx *gin.Context) {}
+func (c *UserHandler) Profile(ctx *gin.Context) {
+	type Profile struct {
+		Email string
+	}
+	sess := sessions.Default(ctx)
+	id := sess.Get(userIdKey).(int64)
+	fmt.Println(id)
+	u, err := c.svc.Profile(ctx, id)
+	if err != nil {
+		// 按照道理来说，这边 id 对应的数据肯定存在，所以要是没找到，
+		// 那就说明是系统出了问题。
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+	ctx.JSON(http.StatusOK, Profile{
+		Email: u.Email,
+	})
+}
