@@ -40,7 +40,10 @@ func initWebServer() *gin.Engine {
 	server := gin.Default()
 	server.Use(cors.New(cors.Config{
 		AllowCredentials: true,
-		AllowHeaders:     []string{"Content-Type"},
+		// 在使用 JWT 的时候，因为我们使用了 Authorization 的头部，所以要加上
+		AllowHeaders: []string{"Content-Type", "Authorization"},
+		// 为了 JWT
+		ExposeHeaders: []string{"X-Jwt-Token"},
 		AllowOriginFunc: func(origin string) bool {
 			if strings.HasPrefix(origin, "http://localhost") {
 				return true
@@ -50,6 +53,29 @@ func initWebServer() *gin.Engine {
 		MaxAge: 12 * time.Hour,
 	}))
 
+	// 使用 session 机制登录
+	//usingSession(server)
+
+	// 使用 JWT
+	usingJWT(server)
+
+	return server
+}
+
+func initUser(server *gin.Engine, db *gorm.DB) {
+	ud := dao.NewUserDAO(db)
+	ur := repository.NewUserRepository(ud)
+	us := service.NewUserService(ur)
+	c := web.NewUserHandler(us)
+	c.RegisterRoutes(server)
+}
+
+func usingJWT(server *gin.Engine) {
+	mldBd := &middleware.JWTLoginMiddlewareBuilder{}
+	server.Use(mldBd.Build())
+}
+
+func usingSession(server *gin.Engine) {
 	// 这里传入的两个 key，一个是数据的 authentication key
 	// 另外一个是加密 key，用于保证 cookie 的安全性。
 	// store := cookie.NewStore([]byte("secret"))
@@ -80,14 +106,4 @@ func initWebServer() *gin.Engine {
 	// 登录校验
 	login := &middleware.LoginMiddlewareBuilder{}
 	server.Use(login.CheckLogin())
-
-	return server
-}
-
-func initUser(server *gin.Engine, db *gorm.DB) {
-	ud := dao.NewUserDAO(db)
-	ur := repository.NewUserRepository(ud)
-	us := service.NewUserService(ur)
-	c := web.NewUserHandler(us)
-	c.RegisterRoutes(server)
 }
