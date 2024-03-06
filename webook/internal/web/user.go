@@ -126,6 +126,9 @@ func (c *UserHandler) Login(ctx *gin.Context) {
 
 	sess := sessions.Default(ctx)
 	sess.Set(userIdKey, u.Id)
+	sess.Options(sessions.Options{
+		MaxAge: 60, // 60 秒过期
+	})
 	err = sess.Save()
 	fmt.Println(sess.Get(userIdKey))
 	if err != nil {
