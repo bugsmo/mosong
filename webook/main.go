@@ -6,13 +6,15 @@ import (
 	"mosong/webook/internal/service"
 	"mosong/webook/internal/web"
 	"mosong/webook/internal/web/middleware"
+	"mosong/webook/pkg/ginx/middleware/ratelimit"
 	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/redis"
+	ginRedis "github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -38,6 +40,15 @@ func initDB() *gorm.DB {
 
 func initWebServer() *gin.Engine {
 	server := gin.Default()
+
+	cmd := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       1,
+	})
+	// 限流一分钟 100 次
+	server.Use(ratelimit.NewBuilder(cmd, time.Minute, 100).Build())
+
 	server.Use(cors.New(cors.Config{
 		AllowCredentials: true,
 		// 在使用 JWT 的时候，因为我们使用了 Authorization 的头部，所以要加上
@@ -89,7 +100,7 @@ func usingSession(server *gin.Engine) {
 	// 第二个就是 tcp，你不太可能用 udp
 	// 第三、四个 就是连接信息和密码
 	// 第五第六就是两个 key
-	store, err := redis.NewStore(16,
+	store, err := ginRedis.NewStore(16,
 		"tcp",
 		"localhost:6379",
 		"",
