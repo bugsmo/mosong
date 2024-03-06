@@ -5,7 +5,8 @@ import "github.com/golang-jwt/jwt/v5"
 // 专门用于 JWT 的代码
 type UserClaims struct {
 	// 我们只需要放一个 user id 就可以了
-	Id int64
+	Id        int64
+	UserAgent string // 验证客户端
 	jwt.RegisteredClaims
 }
 
