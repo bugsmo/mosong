@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package conf.service.v1;
+
+import "google/protobuf/duration.proto";
+import "conf/service/v1/kratos_conf_middleware.proto";
+
+// 服务器
+message Server {
+  // REST
+  message REST {
+    message CORS {
+      repeated string headers = 1;  //
+      repeated string methods = 2;  //
+      repeated string origins = 3;  //
+    }
+
+    string network = 1; // 网络
+    string addr = 2;  // 服务监听地址
+    google.protobuf.Duration timeout = 3; // 超时时间
+    CORS cors = 4;  // 服务监听地址
+    Middleware middleware = 5;  // 中间件
+    bool enable_swagger = 6;  // 启用SwaggerUI
+    bool enable_pprof = 7;  // 启用pprof
+  }
+
+  // RPC
+  REST rest = 1;  // REST服务
+}
