@@ -6,6 +6,7 @@ import "conf/service/v1/kratos_conf_server.proto";
 import "conf/service/v1/kratos_conf_data.proto";
 import "conf/service/v1/kratos_conf_logger.proto";
 import "conf/service/v1/kratos_conf_registry.proto";
+import "conf/service/v1/kratos_conf_tracer.proto";
 
 
 // 引导信息
@@ -14,4 +15,5 @@ message Bootstrap {
   Data data = 2;
   Logger logger = 3;
   Registry registry = 4;
+  Tracer tracer = 5;
 }

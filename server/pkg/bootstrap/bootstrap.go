@@ -12,6 +12,7 @@ import (
 	"mosong/pkg/bootstrap/config"
 	"mosong/pkg/bootstrap/logger"
 	"mosong/pkg/bootstrap/registry"
+	"mosong/pkg/bootstrap/tracer"
 )
 
 var (
@@ -80,6 +81,11 @@ func DoBootstrap(serviceInfo *config.ServiceInfo) (*confV1.Bootstrap, log.Logger
 
 	// init registrar
 	reg := registry.NewRegistry(config.GetBootstrapConfig().Registry)
+
+	// init tracer
+	if err = tracer.NewTracerProvider(config.GetBootstrapConfig().Tracer, serviceInfo); err != nil {
+		panic(fmt.Sprintf("init tracer failed: %v", err))
+	}
 
 	return config.GetBootstrapConfig(), ll, reg
 }

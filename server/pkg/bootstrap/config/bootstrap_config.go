@@ -42,4 +42,9 @@ func initBootstrapConfig() {
 		commonConfig.Registry = &confV1.Registry{}
 		configList = append(configList, commonConfig.Registry)
 	}
+
+	if commonConfig.Tracer == nil {
+		commonConfig.Tracer = &confV1.Tracer{}
+		configList = append(configList, commonConfig.Tracer)
+	}
 }
