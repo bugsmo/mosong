@@ -11,22 +11,6 @@ import (
 	"mosong/pkg/bootstrap/logger/zap"
 )
 
-// NewLogger 创建一个新的日志记录器
-func NewLogger(cfg *confV1.Logger) log.Logger {
-	if cfg == nil {
-		return NewStdLogger()
-	}
-
-	switch Type(cfg.Type) {
-	default:
-		fallthrough
-	case Std:
-		return NewStdLogger()
-	case Zap:
-		return zap.NewLogger(cfg)
-	}
-}
-
 // NewLoggerProvider 创建一个新的日志记录器提供者
 func NewLoggerProvider(cfg *confV1.Logger, serviceInfo *config.ServiceInfo) log.Logger {
 	l := NewLogger(cfg)
@@ -41,6 +25,22 @@ func NewLoggerProvider(cfg *confV1.Logger, serviceInfo *config.ServiceInfo) log.
 		"trace_id", tracing.TraceID(),
 		"span_id", tracing.SpanID(),
 	)
+}
+
+// NewLogger 创建一个新的日志记录器
+func NewLogger(cfg *confV1.Logger) log.Logger {
+	if cfg == nil {
+		return NewStdLogger()
+	}
+
+	switch Type(cfg.Type) {
+	default:
+		fallthrough
+	case Std:
+		return NewStdLogger()
+	case Zap:
+		return zap.NewLogger(cfg)
+	}
 }
 
 // NewStdLogger 创建一个新的日志记录器 - Kratos内置，控制台输出

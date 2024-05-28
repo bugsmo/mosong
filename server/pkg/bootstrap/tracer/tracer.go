@@ -47,7 +47,8 @@ func NewTracerProvider(ctx context.Context, cfg *confV1.Tracer, serviceInfo *con
 	}
 
 	if len(cfg.GetEndpoint()) > 0 {
-		exp, err := NewTracerExporter(cfg.GetBatcher(), cfg.GetEndpoint(), cfg.GetInsecure())
+
+		exp, err := NewTracerExporter(ctx, cfg.GetBatcher(), cfg.GetEndpoint(), cfg.GetInsecure())
 		if err != nil {
 			panic(err)
 		}
@@ -67,9 +68,7 @@ func NewTracerProvider(ctx context.Context, cfg *confV1.Tracer, serviceInfo *con
 }
 
 // NewTracerExporter 创建一个导出器，支持：zipkin、otlp-http、otlp-grpc
-func NewTracerExporter(exporterName, endpoint string, insecure bool) (traceSdk.SpanExporter, error) {
-	ctx := context.Background()
-
+func NewTracerExporter(ctx context.Context, exporterName, endpoint string, insecure bool) (traceSdk.SpanExporter, error) {
 	switch exporterName {
 	case "zipkin":
 		return NewZipkinExporter(ctx, endpoint)
@@ -99,6 +98,7 @@ func NewZipkinExporter(_ context.Context, endpoint string) (traceSdk.SpanExporte
 // NewOtlpHttpExporter 创建OTLP/HTTP导出器，默认端口：4318
 func NewOtlpHttpExporter(ctx context.Context, endpoint string, insecure bool, options ...otlptracehttp.Option) (traceSdk.SpanExporter, error) {
 	var opts []otlptracehttp.Option
+
 	opts = append(opts, otlptracehttp.WithEndpoint(endpoint))
 
 	if insecure {
@@ -116,6 +116,7 @@ func NewOtlpHttpExporter(ctx context.Context, endpoint string, insecure bool, op
 // NewOtlpGrpcExporter 创建OTLP/gRPC导出器，默认端口：4317
 func NewOtlpGrpcExporter(ctx context.Context, endpoint string, insecure bool, options ...otlptracegrpc.Option) (traceSdk.SpanExporter, error) {
 	var opts []otlptracegrpc.Option
+
 	opts = append(opts, otlptracegrpc.WithEndpoint(endpoint))
 
 	if insecure {
