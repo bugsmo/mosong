@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-kratos/kratos/v2"
@@ -26,7 +27,7 @@ var (
 type InitApp func(logger log.Logger, registrar kratosRegistry.Registrar, bootstrap *confV1.Bootstrap) (*kratos.App, func(), error)
 
 // Bootstrap 应用引导启动
-func Bootstrap(initApp InitApp, serviceName, version *string) {
+func Bootstrap(ctx context.Context, initApp InitApp, serviceName, version *string) {
 	if serviceName != nil && len(*serviceName) != 0 {
 		Service.Name = *serviceName
 	}
@@ -35,7 +36,7 @@ func Bootstrap(initApp InitApp, serviceName, version *string) {
 	}
 
 	// bootstrap
-	cfg, ll, reg := DoBootstrap(Service)
+	cfg, ll, reg := DoBootstrap(ctx, Service)
 
 	// init app
 	app, cleanup, err := initApp(ll, reg, cfg)
@@ -64,7 +65,7 @@ func NewAPP(logger log.Logger, registrar kratosRegistry.Registrar, srv ...transp
 }
 
 // DoBootstrap 执行引导
-func DoBootstrap(serviceInfo *config.ServiceInfo) (*confV1.Bootstrap, log.Logger, kratosRegistry.Registrar) {
+func DoBootstrap(ctx context.Context, serviceInfo *config.ServiceInfo) (*confV1.Bootstrap, log.Logger, kratosRegistry.Registrar) {
 	// inject command flags
 	Flags := config.NewCommandFlags()
 	Flags.Init()
@@ -83,7 +84,7 @@ func DoBootstrap(serviceInfo *config.ServiceInfo) (*confV1.Bootstrap, log.Logger
 	reg := registry.NewRegistry(config.GetBootstrapConfig().Registry)
 
 	// init tracer
-	if err = tracer.NewTracerProvider(config.GetBootstrapConfig().Tracer, serviceInfo); err != nil {
+	if err = tracer.NewTracerProvider(ctx, config.GetBootstrapConfig().Tracer, serviceInfo); err != nil {
 		panic(fmt.Sprintf("init tracer failed: %v", err))
 	}
 

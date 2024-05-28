@@ -8,6 +8,7 @@ import (
 
 	confV1 "mosong/api/gen/go/conf/service/v1"
 	"mosong/pkg/bootstrap/config"
+	"mosong/pkg/bootstrap/logger/zap"
 )
 
 // NewLogger 创建一个新的日志记录器
@@ -21,6 +22,8 @@ func NewLogger(cfg *confV1.Logger) log.Logger {
 		fallthrough
 	case Std:
 		return NewStdLogger()
+	case Zap:
+		return zap.NewLogger(cfg)
 	}
 }
 

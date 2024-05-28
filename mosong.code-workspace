@@ -26,8 +26,8 @@
         "type": "go",
         "request": "launch",
         "name": "Backend",
-        "cwd": "${workspaceFolder:backend}",
-        "program": "${workspaceFolder:backend}/"
+        // "cwd": "${workspaceFolder:backend}",
+        "program": "${workspaceFolder:backend}/app/admin/service/cmd/server"
       },
       {
         "type": "node",

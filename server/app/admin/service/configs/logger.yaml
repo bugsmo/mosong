@@ -1,5 +1,5 @@
 logger:
-  type: std
+  type: zap
   
   zap:
     level: "debug"

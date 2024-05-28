@@ -20,6 +20,52 @@ import (
 	"mosong/pkg/bootstrap/config"
 )
 
+// NewTracerProvider 创建一个链路追踪器
+func NewTracerProvider(ctx context.Context, cfg *confV1.Tracer, serviceInfo *config.ServiceInfo) error {
+	if cfg == nil {
+		return errors.New("tracer config is nil")
+	}
+
+	if cfg.Sampler == 0 {
+		cfg.Sampler = 1.0
+	}
+
+	if cfg.Env == "" {
+		cfg.Env = "dev"
+	}
+
+	opts := []traceSdk.TracerProviderOption{
+		// 将基于父span的采样率设置为100%
+		traceSdk.WithSampler(traceSdk.ParentBased(traceSdk.TraceIDRatioBased(cfg.GetSampler()))),
+		// 在资源中记录有关此应用程序的信息
+		traceSdk.WithResource(resource.NewSchemaless(
+			semConv.ServiceNameKey.String(serviceInfo.Name),
+			semConv.ServiceVersionKey.String(serviceInfo.Version),
+			semConv.ServiceInstanceIDKey.String(serviceInfo.Id),
+			attribute.String("env", cfg.GetEnv()),
+		)),
+	}
+
+	if len(cfg.GetEndpoint()) > 0 {
+		exp, err := NewTracerExporter(cfg.GetBatcher(), cfg.GetEndpoint(), cfg.GetInsecure())
+		if err != nil {
+			panic(err)
+		}
+
+		// 始终确保在生产中批量处理
+		opts = append(opts, traceSdk.WithBatcher(exp))
+	}
+
+	tp := traceSdk.NewTracerProvider(opts...)
+	if tp == nil {
+		return errors.New("create tracer provider failed")
+	}
+
+	otel.SetTracerProvider(tp)
+
+	return nil
+}
+
 // NewTracerExporter 创建一个导出器，支持：zipkin、otlp-http、otlp-grpc
 func NewTracerExporter(exporterName, endpoint string, insecure bool) (traceSdk.SpanExporter, error) {
 	ctx := context.Background()
@@ -38,49 +84,6 @@ func NewTracerExporter(exporterName, endpoint string, insecure bool) (traceSdk.S
 	case "stdout":
 		return stdouttrace.New()
 	}
-}
-
-// NewTracerProvider 创建一个链路追踪器
-func NewTracerProvider(cfg *confV1.Tracer, serviceInfo *config.ServiceInfo) error {
-	if cfg == nil {
-		return errors.New("tracer config is nil")
-	}
-
-	if cfg.Sampler == 0 {
-		cfg.Sampler = 1.0
-	}
-
-	if cfg.Env == "" {
-		cfg.Env = "dev"
-	}
-
-	opts := []traceSdk.TracerProviderOption{
-		traceSdk.WithSampler(traceSdk.ParentBased(traceSdk.TraceIDRatioBased(cfg.GetSampler()))),
-		traceSdk.WithResource(resource.NewSchemaless(
-			semConv.ServiceNameKey.String(serviceInfo.Name),
-			semConv.ServiceVersionKey.String(serviceInfo.Version),
-			semConv.ServiceInstanceIDKey.String(serviceInfo.Id),
-			attribute.String("env", cfg.GetEnv()),
-		)),
-	}
-
-	if len(cfg.GetEndpoint()) > 0 {
-		exp, err := NewTracerExporter(cfg.GetBatcher(), cfg.GetEndpoint(), cfg.GetInsecure())
-		if err != nil {
-			panic(err)
-		}
-
-		opts = append(opts, traceSdk.WithBatcher(exp))
-	}
-
-	tp := traceSdk.NewTracerProvider(opts...)
-	if tp == nil {
-		return errors.New("create tracer provider failed")
-	}
-
-	otel.SetTracerProvider(tp)
-
-	return nil
 }
 
 // NewZipkinExporter 创建一个zipkin导出器，默认对端地址：http://localhost:9411/api/v2/spans
