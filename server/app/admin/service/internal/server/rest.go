@@ -9,7 +9,6 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/logging"
-	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/http"
 
 	adminV1 "mosong/api/gen/go/admin/service/v1"
@@ -37,10 +36,9 @@ func NewRESTServer(
 	return srv
 }
 
-// NewMiddleware 创建中间件
+// NewMiddleware 自定义创建中间件
 func newRestMiddleware(logger log.Logger) []middleware.Middleware {
 	var ms []middleware.Middleware
-	ms = append(ms, logging.Server(logger))
-	ms = append(ms, tracing.Server())
+	ms = append(ms, logging.Server(logger)) //日志中间件
 	return ms
 }

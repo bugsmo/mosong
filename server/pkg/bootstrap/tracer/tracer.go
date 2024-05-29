@@ -21,7 +21,7 @@ import (
 )
 
 // NewTracerProvider 创建一个链路追踪器
-func NewTracerProvider(ctx context.Context, cfg *confV1.Tracer, serviceInfo *config.ServiceInfo) error {
+func NewTracerProvider(cfg *confV1.Tracer, serviceInfo *config.ServiceInfo) error {
 	if cfg == nil {
 		return errors.New("tracer config is nil")
 	}
@@ -48,7 +48,7 @@ func NewTracerProvider(ctx context.Context, cfg *confV1.Tracer, serviceInfo *con
 
 	if len(cfg.GetEndpoint()) > 0 {
 
-		exp, err := NewTracerExporter(ctx, cfg.GetBatcher(), cfg.GetEndpoint(), cfg.GetInsecure())
+		exp, err := NewTracerExporter(cfg.GetBatcher(), cfg.GetEndpoint(), cfg.GetInsecure())
 		if err != nil {
 			panic(err)
 		}
@@ -68,7 +68,8 @@ func NewTracerProvider(ctx context.Context, cfg *confV1.Tracer, serviceInfo *con
 }
 
 // NewTracerExporter 创建一个导出器，支持：zipkin、otlp-http、otlp-grpc
-func NewTracerExporter(ctx context.Context, exporterName, endpoint string, insecure bool) (traceSdk.SpanExporter, error) {
+func NewTracerExporter(exporterName, endpoint string, insecure bool) (traceSdk.SpanExporter, error) {
+	ctx := context.Background()
 	switch exporterName {
 	case "zipkin":
 		return NewZipkinExporter(ctx, endpoint)

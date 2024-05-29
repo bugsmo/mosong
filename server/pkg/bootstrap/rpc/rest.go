@@ -41,6 +41,7 @@ func CreateRestServer(cfg *confV1.Bootstrap, m ...middleware.Middleware) *kratos
 			ms = append(ms, validate.Validator())
 		}
 		if cfg.Server.Rest.Middleware.GetEnableCircuitBreaker() {
+			// TODO
 		}
 		if cfg.Server.Rest.Middleware.Limiter != nil {
 			var limiter ratelimit.Limiter

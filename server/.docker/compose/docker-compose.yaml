@@ -6,6 +6,7 @@ networks:
 
 services:
   postgres:
+    restart: always
     image: docker.io/timescale/timescaledb:latest-pg15
     ports:
       - "5432:5432"
@@ -14,9 +15,10 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=123456
-      - POSTGRES_DB=kratos_monolithic_demo
+      - POSTGRES_DB=mosong
 
   redis:
+    restart: always
     image: docker.io/bitnami/redis:latest
     ports:
       - "6379:6379"
@@ -25,9 +27,10 @@ services:
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
     volumes:
-      - /root/app/redis/data:/data
+      - $HOME/app/redis/data:/data
 
   minio:
+    restart: always
     image: docker.io/minio/minio:latest
     ports:
       - "9000:9000"
@@ -41,10 +44,11 @@ services:
       - MINIO_FORCE_NEW_KEYS=yes
       - BITNAMI_DEBUG=true
     volumes:
-      - /root/app/minio/data:/data
+      - $HOME/app/minio/data:/data
     command: server /data --console-address ':9001'
 
   consul:
+    restart: always
     image: docker.io/bitnami/consul:latest
     ports:
       - "8300:8300"
@@ -60,6 +64,7 @@ services:
       - CONSUL_CLIENT_LAN_ADDRESS=0.0.0.0
 
   jaeger:
+    restart: always
     image: docker.io/jaegertracing/all-in-one:latest
     ports:
       - "6831:6831/udp"
