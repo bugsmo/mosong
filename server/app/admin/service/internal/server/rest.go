@@ -3,13 +3,12 @@ package server
 import (
 	"mosong/app/admin/service/cmd/server/assets"
 	"mosong/app/admin/service/internal/service"
-	"mosong/pkg/bootstrap/rpc"
-	swaggerUI "mosong/pkg/swagger-ui"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/logging"
 	"github.com/go-kratos/kratos/v2/transport/http"
+	"github.com/tx7do/kratos-bootstrap/rpc"
 
 	adminV1 "mosong/api/gen/go/admin/service/v1"
 	confV1 "mosong/api/gen/go/conf/service/v1"
